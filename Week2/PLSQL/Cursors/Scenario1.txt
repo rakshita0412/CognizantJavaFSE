@@ -1,0 +1,60 @@
+DECLARE
+    CURSOR c_transactions IS
+        SELECT
+            t.CustomerID,
+            c.CustomerName,
+            t.TransactionID,
+            t.TransactionDate,
+            t.Amount
+        FROM Transactions t
+        JOIN Customers c ON t.CustomerID = c.CustomerID
+        WHERE EXTRACT(MONTH FROM t.TransactionDate) = EXTRACT(MONTH FROM SYSDATE)
+          AND EXTRACT(YEAR FROM t.TransactionDate) = EXTRACT(YEAR FROM SYSDATE)
+        ORDER BY t.CustomerID, t.TransactionDate;
+    
+    TYPE t_transaction_rec IS RECORD (
+        CustomerID      Transactions.CustomerID%TYPE,
+        CustomerName    Customers.CustomerName%TYPE,
+        TransactionID   Transactions.TransactionID%TYPE,
+        TransactionDate Transactions.TransactionDate%TYPE,
+        Amount          Transactions.Amount%TYPE
+    );
+    
+    v_transaction_rec t_transaction_rec;
+    
+    v_current_customer_id Transactions.CustomerID%TYPE := NULL;
+    
+BEGIN
+    OPEN c_transactions;
+    
+    LOOP
+        FETCH c_transactions INTO v_transaction_rec;
+        
+        EXIT WHEN c_transactions%NOTFOUND;
+        
+        IF v_current_customer_id IS NOT NULL AND v_current_customer_id != v_transaction_rec.CustomerID THEN
+            DBMS_OUTPUT.PUT_LINE('End of Statement for Customer ID: ' || v_current_customer_id);
+            DBMS_OUTPUT.PUT_LINE('---------------------------------------');
+        END IF;
+        
+        IF v_current_customer_id IS NULL OR v_current_customer_id != v_transaction_rec.CustomerID THEN
+            DBMS_OUTPUT.PUT_LINE('Statement for Customer ID: ' || v_transaction_rec.CustomerID);
+            DBMS_OUTPUT.PUT_LINE('Customer Name: ' || v_transaction_rec.CustomerName);
+            DBMS_OUTPUT.PUT_LINE('---------------------------------------');
+            v_current_customer_id := v_transaction_rec.CustomerID;
+        END IF;
+        
+        DBMS_OUTPUT.PUT_LINE('Transaction ID: ' || v_transaction_rec.TransactionID);
+        DBMS_OUTPUT.PUT_LINE('Date: ' || TO_CHAR(v_transaction_rec.TransactionDate, 'YYYY-MM-DD'));
+        DBMS_OUTPUT.PUT_LINE('Amount: ' || v_transaction_rec.Amount);
+        DBMS_OUTPUT.PUT_LINE('---------------------------------------');
+    END LOOP;
+    
+    CLOSE c_transactions;
+    
+    IF v_current_customer_id IS NOT NULL THEN
+        DBMS_OUTPUT.PUT_LINE('End of Statement for Customer ID: ' || v_current_customer_id);
+    END IF;
+    
+END;
+/

@@ -1,0 +1,46 @@
+CREATE OR REPLACE PROCEDURE SafeTransferFunds(
+    p_source_account_id IN NUMBER,
+    p_dest_account_id IN NUMBER,
+    p_amount IN NUMBER
+) AS
+    v_source_balance NUMBER;
+    v_dest_balance NUMBER;
+BEGIN
+    BEGIN
+        SELECT balance
+        INTO v_source_balance
+        FROM accounts
+        WHERE account_id = p_source_account_id
+        FOR UPDATE;
+
+        IF v_source_balance < p_amount THEN
+            RAISE_APPLICATION_ERROR(-20001, 'Insufficient funds in source account.');
+        END IF;
+
+        SELECT balance
+        INTO v_dest_balance
+        FROM accounts
+        WHERE account_id = p_dest_account_id
+        FOR UPDATE;
+
+        UPDATE accounts
+        SET balance = balance - p_amount
+        WHERE account_id = p_source_account_id;
+
+        UPDATE accounts
+        SET balance = balance + p_amount
+        WHERE account_id = p_dest_account_id;
+
+        COMMIT;
+
+        DBMS_OUTPUT.PUT_LINE('Funds transferred successfully.');
+        
+    EXCEPTION
+        WHEN OTHERS THEN
+            ROLLBACK;
+
+            DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+            
+            RAISE;
+    END;
+END SafeTransferFunds;

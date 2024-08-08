@@ -1,0 +1,45 @@
+DECLARE
+    v_new_policy_rate NUMBER := 4.5;     
+    
+    CURSOR c_loans IS
+        SELECT LoanID, InterestRate
+        FROM Loans;
+    
+    TYPE t_loan_rec IS RECORD (
+        LoanID       Loans.LoanID%TYPE,
+        InterestRate Loans.InterestRate%TYPE
+    );
+    
+       v_loan_rec t_loan_rec;
+    
+BEGIN
+    OPEN c_loans;
+    
+   
+    LOOP
+        FETCH c_loans INTO v_loan_rec;
+        
+        EXIT WHEN c_loans%NOTFOUND;
+        
+               UPDATE Loans
+        SET InterestRate = v_new_policy_rate
+        WHERE LoanID = v_loan_rec.LoanID;
+        
+                DBMS_OUTPUT.PUT_LINE('Updated Loan ID: ' || v_loan_rec.LoanID);
+        DBMS_OUTPUT.PUT_LINE('Old Interest Rate: ' || v_loan_rec.InterestRate);
+        DBMS_OUTPUT.PUT_LINE('New Interest Rate: ' || v_new_policy_rate);
+        DBMS_OUTPUT.PUT_LINE('---------------------------------------');
+    END LOOP;
+    
+    CLOSE c_loans;
+    
+    COMMIT;
+    
+    DBMS_OUTPUT.PUT_LINE('Interest rates updated based on the new policy.');
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+END;
+/

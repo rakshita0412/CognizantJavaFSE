@@ -1,0 +1,33 @@
+CREATE OR REPLACE PROCEDURE AddNewCustomer(
+    p_customer_id IN NUMBER,
+    p_customer_name IN VARCHAR2,
+    p_contact_info IN VARCHAR2
+) AS
+BEGIN
+    BEGIN
+        DECLARE
+            v_count NUMBER;
+        BEGIN
+            SELECT COUNT(*)
+            INTO v_count
+            FROM Customers
+            WHERE CustomerID = p_customer_id;
+
+            IF v_count > 0 THEN
+                RAISE_APPLICATION_ERROR(-20001, 'Error: Customer with ID ' || p_customer_id || ' already exists.');
+            END IF;
+        END;
+
+        INSERT INTO Customers (CustomerID, CustomerName, ContactInfo)
+        VALUES (p_customer_id, p_customer_name, p_contact_info);
+
+        COMMIT;
+
+        DBMS_OUTPUT.PUT_LINE('New customer added successfully. Customer ID: ' || p_customer_id);
+        
+    EXCEPTION
+        WHEN OTHERS THEN
+            ROLLBACK;
+            DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+    END;
+END AddNewCustomer;

@@ -1,0 +1,44 @@
+DECLARE
+    v_annual_fee NUMBER := 25;     
+
+    CURSOR c_accounts IS
+        SELECT AccountID, Balance
+        FROM Accounts;
+    
+    TYPE t_account_rec IS RECORD (
+        AccountID Accounts.AccountID%TYPE,
+        Balance   Accounts.Balance%TYPE
+    );
+    
+    v_account_rec t_account_rec;
+    
+BEGIN
+    OPEN c_accounts;
+    
+    LOOP
+        FETCH c_accounts INTO v_account_rec;
+        
+        EXIT WHEN c_accounts%NOTFOUND;
+        
+        UPDATE Accounts
+        SET Balance = v_account_rec.Balance - v_annual_fee
+        WHERE AccountID = v_account_rec.AccountID;
+        
+        DBMS_OUTPUT.PUT_LINE('Applied annual fee to Account ID: ' || v_account_rec.AccountID);
+        DBMS_OUTPUT.PUT_LINE('Old Balance: ' || v_account_rec.Balance);
+        DBMS_OUTPUT.PUT_LINE('New Balance: ' || (v_account_rec.Balance - v_annual_fee));
+        DBMS_OUTPUT.PUT_LINE('---------------------------------------');
+    END LOOP;
+    
+    CLOSE c_accounts;
+    
+    COMMIT;
+    
+    DBMS_OUTPUT.PUT_LINE('Annual fee applied to all accounts successfully.');
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+END;
+/

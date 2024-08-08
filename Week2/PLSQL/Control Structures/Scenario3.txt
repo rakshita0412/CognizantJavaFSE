@@ -1,0 +1,21 @@
+DECLARE
+       CURSOR c_loans_due IS
+        SELECT l.LOAN_ID, l.DUE_DATE, c.CUSTOMER_NAME
+        FROM LOANS l
+        JOIN CUSTOMERS c ON l.CUSTOMER_ID = c.CUSTOMER_ID
+        WHERE l.DUE_DATE BETWEEN SYSDATE AND SYSDATE + 30;
+
+    rec c_loans_due%ROWTYPE;
+BEGIN
+    FOR rec IN c_loans_due LOOP
+        DBMS_OUTPUT.PUT_LINE('Reminder: Customer ' || rec.CUSTOMER_NAME || 
+                             ' has a loan (ID: ' || rec.LOAN_ID || 
+                             ') due on ' || TO_CHAR(rec.DUE_DATE, 'MM-DD-YYYY') || 
+                             '. Please take necessary actions.');
+    END LOOP;
+    
+    DBMS_OUTPUT.PUT_LINE('Reminder messages printed for all loans due within the next 30 days.');
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+END;

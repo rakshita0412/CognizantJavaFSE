@@ -1,0 +1,15 @@
+BEGIN
+       UPDATE Customers
+    SET IsVIP = CASE
+                    WHEN Balance > 10000 THEN 1
+                    ELSE 0
+                 END;
+
+    COMMIT;
+
+    DBMS_OUTPUT.PUT_LINE('VIP status updated for all customers.');
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+END;
